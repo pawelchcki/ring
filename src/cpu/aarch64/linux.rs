@@ -37,14 +37,22 @@ pub const FORCE_DYNAMIC_DETECTION: u32 = !Neon::mask();
 
 pub fn detect_features() -> u32 {
     use super::{Aes, CAPS_STATIC, PMull, Sha256, Sha512};
+    #[cfg(not(all(target_os = "linux", target_env = "")))]
     use libc::{AT_HWCAP, HWCAP_AES, HWCAP_PMULL, HWCAP_SHA2, HWCAP_SHA512, getauxval};
+    #[cfg(all(target_os = "linux", target_env = ""))]
+    use linux_raw_sys::ptrace::{HWCAP_AES, HWCAP_PMULL, HWCAP_SHA2, HWCAP_SHA512};
 
     let mut features = 0;
 
     // We do not need to check for the presence of NEON, as Armv8-A always has it
     const _ASSERT_NEON_DETECTED: () = assert!((CAPS_STATIC & Neon::mask()) == Neon::mask());
 
+    #[cfg(not(all(target_os = "linux", target_env = "")))]
     let caps = unsafe { getauxval(AT_HWCAP) };
+    // Freestanding Linux has no libc getauxval ABI. Rustix reads the kernel
+    // auxiliary vector (or uses the one supplied by process startup).
+    #[cfg(all(target_os = "linux", target_env = ""))]
+    let caps = rustix::param::linux_hwcap().0 as u32;
 
     if caps & HWCAP_AES == HWCAP_AES {
         features |= Aes::mask();

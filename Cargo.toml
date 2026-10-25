@@ -166,7 +166,7 @@ getrandom = { version = "0.4.3" }
 
 untrusted = { version = "0.9" }
 
-[target.'cfg(all(any(all(target_arch = "aarch64", target_endian = "little"), all(target_arch = "arm", target_endian = "little")), any(target_os = "android", target_os = "linux")))'.dependencies]
+[target.'cfg(all(any(all(target_arch = "aarch64", target_endian = "little"), all(target_arch = "arm", target_endian = "little")), any(target_os = "android", target_os = "linux"), not(all(target_arch = "aarch64", target_os = "linux", target_env = ""))))'.dependencies]
 libc = { version = "0.2.172", default-features = false }
 
 [target.'cfg(all(all(target_arch = "aarch64", target_endian = "little"), target_vendor = "apple", any(target_os = "ios", target_os = "macos", target_os = "tvos", target_os = "visionos", target_os = "watchos")))'.dependencies]
@@ -249,3 +249,7 @@ default-members = [
     ".",
     "cavp"
 ]
+
+[target.'cfg(all(target_arch = "aarch64", target_os = "linux", target_env = ""))'.dependencies]
+rustix = { version = "1.1.5", default-features = false, features = ["param"] }
+linux-raw-sys = { version = "0.12", default-features = false, features = ["ptrace", "no_std"] }
